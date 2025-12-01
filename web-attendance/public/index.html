@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Web Attendance System</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; max-width:900px; }
+  label { font-weight: bold; display:inline-block; width:80px; }
+  input, button { padding: 8px; margin: 6px 0; }
+  #studentBox { font-size: 20px; font-weight: bold; margin: 12px 0; }
+  table { margin-top: 20px; width:100%; border-collapse: collapse; }
+  th, td { border: 1px solid #444; padding: 8px; text-align:left; }
+  th { background:#efefef; }
+  .controls { margin-bottom:10px; }
+</style>
+<script>
+/* Student list from Namelist.docx */
+const students = [
+ "AMRITHAA M","BIBEK KUMAR SAH","BOWSIYA K","JAISNAV KRISHNA H S","JAMES EDISON P",
+ "JAYASURYA P","KAAVIYA SREE P","KARTHIKEYAN M","KAUSHIK K","KAUSHIKKRUSHNAN A",
+ "KAVIYA R S","KISHORE V","KRISHNA S B","KRISHNACHANDAR S","LIGIN PRANAV N",
+ "MADHANRAJ M","MITHRA B","MOHAMED AZMAL M I","MOHAMMAD AREEB","MONIKA S",
+ "MONISH R","MUGESH KANNA M","NAVEED A R","NAVEEN PRASATH M","NISHA K S",
+ "NITESH NATHAN K","PADMAJA SOUNDARARAJAN","PADMINI G","POOJA M","POORNIMA R",
+ "POOSHANKUMAR P","PRADEESH SIVAKUMAR","PRAGIT R V","R NITHIN","R Y JAISSIMHA",
+ "RAGURAM M","REXSON JOEWIN FERNAND","RIA K","RIFATH RIAZ ANWAR","ROHIT A",
+ "ROHIT ATHAVAN R","S PRANAV","S SUDHIR AVINESH","SACHIN CHAUHAN","SAGA MURUGAN S",
+ "SAI KAUSHIK N","SAI SANTHOSH S","SAIDHARAN V P","SAINATH RAJENDRAN","SAM ROGER X",
+ "SANJAY BALAN M","SANJIT T","SATHIYASRI S","SAUMIYA VARALAKSHMI E","SIBI VISHNU S",
+ "SIDDHARTH GOUTHAMAN","SRIJITH R","SUJEESH J S","V ASHWADHAN","V KAUSHIK MUTHURAMAN",
+ "V SACHIN KUMARAN","VASANTHAVEL K","VIDHYASHALINI R S","YESHWANTH V","YOGESHWARI S"
+];
+
+let index = 0;
+let records = [];
+
+/* load first student */
+function loadStudent() {
+  const box = document.getElementById('studentBox');
+  box.textContent = (index < students.length) ? students[index] : 'Completed!';
+  document.getElementById('pa').focus();
+}
+
+/* Next button */
+function nextStudent() {
+  const paEl = document.getElementById('pa');
+  const pa = paEl.value.trim().toUpperCase();
+  if (pa !== 'P' && pa !== 'A') {
+    alert('Enter only P or A');
+    paEl.focus();
+    return;
+  }
+
+  records.push({ name: students[index], pa: pa });
+  paEl.value = '';
+  index++;
+  loadStudent();
+}
+
+/* View All */
+function viewAll() {
+  const date = document.getElementById('date').value.trim();
+  const period = document.getElementById('period').value.trim();
+
+  let out = document.getElementById('output');
+  if (records.length === 0) {
+    out.innerHTML = '<em>No attendance recorded yet.</em>';
+    return;
+  }
+
+  let html = `<h3>Date: ${date || '-'}</h3><h3>Period: ${period || '-'}</h3>`;
+  html += '<table><thead><tr><th>S.No</th><th>Student Name</th><th>P/A</th></tr></thead><tbody>';
+  records.forEach((r, i) => {
+    html += `<tr><td>${i+1}</td><td>${escapeHtml(r.name)}</td><td>${r.pa}</td></tr>`;
+  });
+  html += '</tbody></table>';
+  html += '<button onclick="downloadCSV()">Download CSV</button>';
+  out.innerHTML = html;
+}
+
+/* CSV download helper */
+function downloadCSV() {
+  if (records.length === 0) { alert('No data'); return; }
+  const date = document.getElementById('date').value.trim();
+  const period = document.getElementById('period').value.trim();
+  const lines = [];
+  lines.push(['Date:', date || '', 'Period:', period || ''].join(','));
+  lines.push(['S.No','Student Name','P/A'].join(','));
+  records.forEach((r,i) => lines.push([i+1, r.name, r.pa].map(csvSafe).join(',')));
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'attendance.csv'; document.body.appendChild(a); a.click();
+  URL.revokeObjectURL(url); a.remove();
+}
+
+/* small helpers */
+function csvSafe(v){ return `"${(v+'').replace(/"/g,'""')}"`; }
+function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+window.onload = loadStudent;
+</script>
+</head>
+<body>
+  <h2>Web Attendance System</h2>
+
+  <div class="controls">
+    <label>Date:</label><input id="date" placeholder="YYYY-MM-DD"><br>
+    <label>Period:</label><input id="period" placeholder="e.g. 1"><br>
+  </div>
+
+  <div id="studentBox"></div>
+
+  <div>
+    <label>P / A:</label>
+    <input id="pa" maxlength="1" style="width:40px">
+    <button onclick="nextStudent()">Next</button>
+    <button onclick="viewAll()">View All</button>
+  </div>
+
+  <div id="output"></div>
+</body>
+</html>
